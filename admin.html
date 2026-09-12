@@ -10,7 +10,7 @@
 
   <!-- Header -->
   <header class="p-6 border-b border-slate-800 flex justify-between items-center">
-    <h1 class="text-2xl font-bold tracking-tight text-indigo-400">⚙️ Admin Panel</h1>
+    <h1 class="text-2xl font-bold tracking-tight text-indigo-400">Admin Panel</h1>
     <div class="flex items-center gap-4">
       <a href="index.html" class="text-sm text-slate-400 hover:text-slate-200 transition-colors">← Înapoi la Soundboard</a>
       <button id="btn-logout" class="hidden text-sm bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30 px-3 py-1.5 rounded-lg transition-colors">
@@ -56,8 +56,8 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">URL Fișier Audio (.mp3)</label>
-            <input type="url" id="sound-url" placeholder="https://..." required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <label class="block text-xs font-medium text-slate-400 mb-1">URL Audio sau Cale Relativă</label>
+            <input type="url" id="sound-url" placeholder="ex: ./audio/pop.mp3 sau https://..." required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
 
           <div>
@@ -192,29 +192,27 @@
 
     // 5. Adăugare / Update Sunet
     soundForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const soundId = soundIdInput.value;
-      const soundPayload = {
-        label: soundLabelInput.value.trim(),
-        url: soundUrlInput.value.trim(),
-        key: soundKeyInput.value.trim().toUpperCase(),
-        order: parseInt(soundOrderInput.value, 10) || 1
-      };
+        e.preventDefault();
+        
+        const soundId = soundIdInput.value;
+        const soundPayload = {
+            label: soundLabelInput.value.trim(),
+            url: soundUrlInput.value.trim(),
+            key: soundKeyInput.value.trim().toUpperCase(),
+            order: parseInt(soundOrderInput.value, 10) || 1
+        };
 
-      try {
-        if (soundId) {
-          // Modificare document existent
-          await updateDoc(doc(db, "sounds", soundId), soundPayload);
-        } else {
-          // Adăugare document nou
-          await addDoc(collection(db, "sounds"), soundPayload);
+        try {
+            if (soundId) {
+            await updateDoc(doc(db, "sounds", soundId), soundPayload);
+            } else {
+            await addDoc(collection(db, "sounds"), soundPayload);
+            }
+            resetForm();
+        } catch (err) {
+            console.error("Eroare la salvarea datelor:", err);
         }
-        resetForm();
-      } catch (err) {
-        console.error("Eroare la salvarea datelor:", err);
-      }
-    });
+        });
 
     // 6. Pregătire Formular pentru Editare
     window.editSound = (id) => {
