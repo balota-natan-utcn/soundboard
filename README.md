@@ -22,7 +22,7 @@ A simple single-page web soundboard application hosted on GitHub Pages, featurin
 .
 ├── index.html              # Main soundboard page
 ├── admin.html              # Admin authentication and management dashboard
-├── favicon.png             # Site favicon
-├── audio/                  # Local audio files (.mp3)
+├── hero.png                # Site favicon
+├── audio/                  # Local audio files (.ogg)
 └── js/
     └── firebase-config.js  # Firebase configuration and initialization
