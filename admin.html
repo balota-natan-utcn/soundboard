@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Soundboard - Admin Panel</title>
+  <title>Varu Soundboard - Admin Panel</title>
+
+  <link rel="icon" type="image/png" href="./images/hero-admin.png">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
 
   <!-- Header -->
   <header class="p-6 border-b border-slate-800 flex justify-between items-center">
-    <h1 class="text-2xl font-bold tracking-tight text-indigo-400">Admin Panel</h1>
+    <div class="flex items-center gap-3">
+        <!-- Imagine PNG -->
+        <img src="./images/hero-admin.png" alt="Admin Soundboard Logo" class="w-16 h-16 object-contain">
+        <h1 class="text-2xl font-bold tracking-tight text-indigo-400">Varu Admin Panel</h1>
+    </div>
     <div class="flex items-center gap-4">
       <a href="index.html" class="text-sm text-slate-400 hover:text-slate-200 transition-colors">← Înapoi la Soundboard</a>
       <button id="btn-logout" class="hidden text-sm bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30 px-3 py-1.5 rounded-lg transition-colors">
