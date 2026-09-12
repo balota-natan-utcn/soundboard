@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soundboard - Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="p-6 border-b border-slate-800 flex justify-between items-center">
+    <h1 class="text-2xl font-bold tracking-tight text-indigo-400">⚙️ Admin Panel</h1>
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="text-sm text-slate-400 hover:text-slate-200 transition-colors">← Înapoi la Soundboard</a>
+      <button id="btn-logout" class="hidden text-sm bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30 px-3 py-1.5 rounded-lg transition-colors">
+        Deconectare
+      </button>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8 flex-1 flex flex-col items-center justify-center">
+
+    <!-- 1. FORMULAR LOGIN (Apare doar când utilizatorul este deconectat) -->
+    <section id="login-section" class="w-full max-w-md bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl">
+      <h2 class="text-xl font-semibold mb-6 text-center text-slate-200">Autentificare Administrator</h2>
+      
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Email</label>
+          <input type="email" id="login-email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Parolă</label>
+          <input type="password" id="login-password" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100">
+        </div>
+        <p id="login-error" class="text-xs text-red-400 hidden"></p>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition-colors shadow-lg">
+          Autentificare
+        </button>
+      </form>
+    </section>
+
+    <!-- 2. DASHBOARD ADMIN (Apare doar când utilizatorul este autentificat) -->
+    <section id="admin-dashboard" class="w-full max-w-4xl space-y-8 hidden">
+      
+      <!-- Formular Adăugare / Editare Sunet -->
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
+        <h3 id="form-title" class="text-lg font-semibold mb-4 text-indigo-300">Adaugă Sunet Nou</h3>
+        <form id="sound-form" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+          <input type="hidden" id="sound-id">
+          
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Text Buton (Label)</label>
+            <input type="text" id="sound-label" placeholder="ex: Applause" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">URL Fișier Audio (.mp3)</label>
+            <input type="url" id="sound-url" placeholder="https://..." required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Tastă Shortcut (ex: 1, Q)</label>
+            <input type="text" id="sound-key" maxlength="1" placeholder="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Ordine (ex: 1, 2, 3)</label>
+            <input type="number" id="sound-order" placeholder="1" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <div class="sm:col-span-2 md:col-span-4 flex justify-end gap-3 pt-2">
+            <button type="button" id="btn-cancel-edit" class="hidden px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded-lg transition-colors">
+              Anulează Editarea
+            </button>
+            <button type="submit" id="btn-submit-sound" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-lg transition-colors shadow">
+              Salvează Sunetul
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista de Sunete Existente -->
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
+        <h3 class="text-lg font-semibold mb-4 text-slate-200">Sunete Existente</h3>
+        <div id="sounds-list" class="space-y-3">
+          <!-- Itemii vor fi încărcați dinamic -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Script Logică Admin & Firebase Auth/Firestore -->
+  <script type="module">
+    import { db, auth } from './js/firebase-config.js';
+    import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Elementi DOM
+    const loginSection = document.getElementById('login-section');
+    const adminDashboard = document.getElementById('admin-dashboard');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    const btnLogout = document.getElementById('btn-logout');
+    
+    const soundForm = document.getElementById('sound-form');
+    const soundIdInput = document.getElementById('sound-id');
+    const soundLabelInput = document.getElementById('sound-label');
+    const soundUrlInput = document.getElementById('sound-url');
+    const soundKeyInput = document.getElementById('sound-key');
+    const soundOrderInput = document.getElementById('sound-order');
+    const formTitle = document.getElementById('form-title');
+    const btnCancelEdit = document.getElementById('btn-cancel-edit');
+    const soundsList = document.getElementById('sounds-list');
+
+    let soundsData = [];
+
+    // 1. Verificare Stare Autentificare
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginSection.classList.add('hidden');
+        adminDashboard.classList.remove('hidden');
+        btnLogout.classList.remove('hidden');
+        loadSounds();
+      } else {
+        loginSection.classList.remove('hidden');
+        adminDashboard.classList.add('hidden');
+        btnLogout.classList.add('hidden');
+      }
+    });
+
+    // 2. Logică Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginError.classList.add('hidden');
+      
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        loginForm.reset();
+      } catch (err) {
+        loginError.textContent = "Email sau parolă incorectă.";
+        loginError.classList.remove('hidden');
+      }
+    });
+
+    // 3. Logică Logout
+    btnLogout.addEventListener('click', () => signOut(auth));
+
+    // 4. Citire & Afișare Sunete
+    function loadSounds() {
+      const q = query(collection(db, "sounds"), orderBy("order", "asc"));
+      
+      onSnapshot(q, (snapshot) => {
+        soundsData = [];
+        soundsList.innerHTML = '';
+        
+        if (snapshot.empty) {
+          soundsList.innerHTML = '<p class="text-slate-500 text-sm">Nu există sunete salvate.</p>';
+          return;
+        }
+
+        snapshot.forEach((docSnap) => {
+          const sound = { id: docSnap.id, ...docSnap.data() };
+          soundsData.push(sound);
+          
+          const item = document.createElement('div');
+          item.className = "flex items-center justify-between p-4 bg-slate-900 border border-slate-700/60 rounded-xl";
+          item.innerHTML = `
+            <div class="flex items-center gap-4">
+              <span class="text-xs font-mono bg-indigo-900/50 text-indigo-300 border border-indigo-700/50 px-2.5 py-1 rounded-md">#${sound.order}</span>
+              <div>
+                <p class="font-medium text-slate-100">${sound.label}</p>
+                <p class="text-xs text-slate-500 truncate max-w-xs">${sound.url}</p>
+              </div>
+              ${sound.key ? `<span class="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Tastă: ${sound.key}</span>` : ''}
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="editSound('${sound.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition-colors">Edit</button>
+              <button onclick="deleteSound('${sound.id}')" class="px-3 py-1.5 bg-red-900/30 hover:bg-red-800/50 text-red-300 text-xs font-medium rounded-lg border border-red-800/40 transition-colors">Șterge</button>
+            </div>
+          `;
+          soundsList.appendChild(item);
+        });
+      });
+    }
+
+    // 5. Adăugare / Update Sunet
+    soundForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const soundId = soundIdInput.value;
+      const soundPayload = {
+        label: soundLabelInput.value.trim(),
+        url: soundUrlInput.value.trim(),
+        key: soundKeyInput.value.trim().toUpperCase(),
+        order: parseInt(soundOrderInput.value, 10) || 1
+      };
+
+      try {
+        if (soundId) {
+          // Modificare document existent
+          await updateDoc(doc(db, "sounds", soundId), soundPayload);
+        } else {
+          // Adăugare document nou
+          await addDoc(collection(db, "sounds"), soundPayload);
+        }
+        resetForm();
+      } catch (err) {
+        console.error("Eroare la salvarea datelor:", err);
+      }
+    });
+
+    // 6. Pregătire Formular pentru Editare
+    window.editSound = (id) => {
+      const sound = soundsData.find(s => s.id === id);
+      if (!sound) return;
+
+      soundIdInput.value = sound.id;
+      soundLabelInput.value = sound.label;
+      soundUrlInput.value = sound.url;
+      soundKeyInput.value = sound.key || '';
+      soundOrderInput.value = sound.order || 1;
+
+      formTitle.textContent = "Editează Sunetul";
+      btnCancelEdit.classList.remove('hidden');
+    };
+
+    // 7. Ștergere Sunet
+    window.deleteSound = async (id) => {
+      if (confirm("Ești sigur că vrei să ștergi acest sunet?")) {
+        try {
+          await deleteDoc(doc(db, "sounds", id));
+        } catch (err) {
+          console.error("Eroare la ștergere:", err);
+        }
+      }
+    };
+
+    // Resetare Formular
+    btnCancelEdit.addEventListener('click', resetForm);
+
+    function resetForm() {
+      soundForm.reset();
+      soundIdInput.value = '';
+      formTitle.textContent = "Adaugă Sunet Nou";
+      btnCancelEdit.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soundboard App</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="p-6 border-b border-slate-800 flex justify-between items-center">
+    <h1 class="text-2xl font-bold tracking-tight text-indigo-400">🔊 Soundboard</h1>
+    <a href="admin.html" class="text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg transition-colors border border-slate-700">
+      Admin Login
+    </a>
+  </header>
+
+  <!-- Sound Grid -->
+  <main class="container mx-auto px-4 py-8 flex-1 flex items-center justify-center">
+    <div id="sound-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full max-w-4xl">
+      <!-- Butoanele vor fi generate dinamic de app.js -->
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="p-4 text-center text-xs text-slate-500 border-t border-slate-800">
+    Găzduit pe GitHub Pages • Powered by JavaScript
+  </footer>
+
+  <!-- Importăm Firebase ca modul JS -->
+<script type="module">
+  import { db } from './js/firebase-config.js';
+  import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const grid = document.getElementById('sound-grid');
+  let soundData = [];
+
+  // Ascultăm în timp real modificările din colecția 'sounds'
+  function listenToSounds() {
+    const q = query(collection(db, "sounds"), orderBy("order", "asc"));
+    
+    onSnapshot(q, (snapshot) => {
+      soundData = [];
+      snapshot.forEach((doc) => {
+        soundData.push({ id: doc.id, ...doc.data() });
+      });
+      renderGrid();
+    }, (error) => {
+      console.error("Eroare la încărcarea sunetelor din Firestore:", error);
+    });
+  }
+
+  function renderGrid() {
+    grid.innerHTML = '';
+    
+    if (soundData.length === 0) {
+      grid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-10">Nu există sunete adăugate încă.</p>';
+      return;
+    }
+
+    soundData.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = `
+        relative flex flex-col items-center justify-center p-6 bg-slate-800 hover:bg-indigo-600 
+        active:scale-95 text-slate-100 font-semibold rounded-2xl border border-slate-700 
+        shadow-lg transition-all duration-150 group h-32 select-none cursor-pointer
+      `;
+      
+      btn.innerHTML = `
+        <span class="text-lg text-center group-hover:scale-105 transition-transform">${item.label}</span>
+        ${item.key ? `<span class="absolute top-2 right-3 text-xs text-slate-500 group-hover:text-indigo-200 font-mono">${item.key}</span>` : ''}
+      `;
+
+      btn.addEventListener('click', () => playSound(item.url, btn));
+      grid.appendChild(btn);
+    });
+  }
+
+  function playSound(url, btnElement) {
+    if (!url) return;
+    const audio = new Audio(url);
+    
+    btnElement.classList.add('ring-4', 'ring-indigo-400', 'bg-indigo-600');
+    
+    audio.play().catch(err => console.error("Eroare la redarea audio:", err));
+    
+    audio.onended = () => {
+      btnElement.classList.remove('ring-4', 'ring-indigo-400', 'bg-indigo-600');
+    };
+  }
+
+  // TASTE SHORCUTS
+  window.addEventListener('keydown', (e) => {
+    const match = soundData.find(s => s.key && s.key.toLowerCase() === e.key.toLowerCase());
+    if (match) {
+      const index = soundData.indexOf(match);
+      const buttons = grid.querySelectorAll('button');
+      if (buttons[index]) playSound(match.url, buttons[index]);
+    }
+  });
+
+  // Pornim ascultarea datelor la încărcarea paginii
+  listenToSounds();
+</script>
+</body>
+</html>
